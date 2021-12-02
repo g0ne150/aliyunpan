@@ -16,16 +16,6 @@ package pandownload
 import (
 	"errors"
 	"fmt"
-	"github.com/tickstep/aliyunpan-api/aliyunpan"
-	"github.com/tickstep/aliyunpan-api/aliyunpan/apierror"
-	"github.com/tickstep/aliyunpan/cmder/cmdtable"
-	"github.com/tickstep/aliyunpan/internal/file/downloader"
-	"github.com/tickstep/aliyunpan/internal/functions"
-	"github.com/tickstep/aliyunpan/internal/taskframework"
-	"github.com/tickstep/library-go/converter"
-	"github.com/tickstep/library-go/logger"
-	"github.com/tickstep/library-go/requester"
-	"github.com/tickstep/aliyunpan/library/requester/transfer"
 	"io"
 	"net/http"
 	"os"
@@ -33,6 +23,17 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/tickstep/aliyunpan-api/aliyunpan"
+	"github.com/tickstep/aliyunpan-api/aliyunpan/apierror"
+	"github.com/tickstep/aliyunpan/cmder/cmdtable"
+	"github.com/tickstep/aliyunpan/internal/file/downloader"
+	"github.com/tickstep/aliyunpan/internal/functions"
+	"github.com/tickstep/aliyunpan/internal/taskframework"
+	"github.com/tickstep/aliyunpan/library/requester/transfer"
+	"github.com/tickstep/library-go/converter"
+	"github.com/tickstep/library-go/logger"
+	"github.com/tickstep/library-go/requester"
 )
 
 type (
@@ -54,10 +55,10 @@ type (
 		IsOverwrite          bool // 是否覆盖已存在的文件
 		NoCheck              bool // 不校验文件
 
-		FilePanPath string // 要下载的网盘文件路径
-		SavePath    string // 文件保存在本地的路径
-		OriginSaveRootPath    string // 文件保存在本地的根目录路径
-		DriveId    string
+		FilePanPath        string // 要下载的网盘文件路径
+		SavePath           string // 文件保存在本地的路径
+		OriginSaveRootPath string // 文件保存在本地的根目录路径
+		DriveId            string
 
 		fileInfo *aliyunpan.FileEntity // 文件或目录详情
 	}
@@ -142,7 +143,7 @@ func (dtu *DownloadTaskUnit) download() (err error) {
 		if dtu.IsPrintStatus {
 			// 输出所有的worker状态
 			var (
-				tb      = cmdtable.NewTable(builder)
+				tb = cmdtable.NewTable(builder)
 			)
 			tb.SetHeader([]string{"#", "status", "range", "left", "speeds", "error"})
 			workersCallback(func(key int, worker *downloader.Worker) bool {
@@ -377,7 +378,11 @@ func (dtu *DownloadTaskUnit) Run() (result *taskframework.TaskUnitRunResult) {
 			subUnit.Cfg = &newCfg
 			subUnit.fileInfo = fileList[k] // 保存文件信息
 			subUnit.FilePanPath = fileList[k].Path
+
+			// FIXME 子文件保存路径错误
 			subUnit.SavePath = filepath.Join(dtu.OriginSaveRootPath, fileList[k].Path) // 保存位置
+			// subUnit.SavePath = filepath.Join(dtu.SavePath, fileList[k].FileName) // 保存位置
+			fmt.Printf("subUnit.SavePath, dtu.SavePath, fileList[k].FileName: [%v|%v|%v]\n", subUnit.SavePath, dtu.SavePath, fileList[k].FileName)
 
 			// 加入父队列
 			info := dtu.ParentTaskExecutor.Append(&subUnit, dtu.taskInfo.MaxRetry())
